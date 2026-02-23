@@ -1,0 +1,57 @@
+import app from 'flarum/admin/app';
+import Component from 'flarum/common/Component';
+import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
+import type Mithril from 'mithril';
+import LogFileListItem from './LogFileListItem';
+
+export default class LogFileList extends Component {
+  oninit(vnode) {
+    super.oninit(vnode);
+
+    this.loading = true;
+    this.files = [];
+
+    this.state = this.attrs.state;
+
+    // Register refresh callback with the state
+    this.state.setRefreshCallback(() => this.refresh());
+
+    this.refresh();
+  }
+
+  view() {
+    if (this.loading) {
+      return <LoadingIndicator />;
+    }
+
+    return (
+      <div className="LogViewerPage--fileListItems">
+        {this.files.map((file) => {
+          return <LogFileListItem file={file} state={this.state} />;
+        })}
+      </div>
+    );
+  }
+
+  refresh(clear = true) {
+    if (clear) {
+      this.loading = true;
+      this.files = [];
+    }
+
+    return this.loadResults().then(this.parseResults.bind(this));
+  }
+
+  loadResults() {
+    return app.store.find('logs');
+  }
+
+  parseResults(results) {
+    this.files = results;
+
+    this.loading = false;
+
+    m.redraw();
+    return results;
+  }
+}
